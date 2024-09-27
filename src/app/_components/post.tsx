@@ -1,50 +1,34 @@
 "use client";
-
+import axios from "axios";
 import { useState } from "react";
-
-import { api } from "~/trpc/react";
-
 export function LatestPost() {
-  const [latestPost] = api.post.getLatest.useSuspenseQuery();
+  const [response, setResponse] = useState<string>("");
 
-  const utils = api.useUtils();
-  const [name, setName] = useState("");
-  const createPost = api.post.create.useMutation({
-    onSuccess: async () => {
-      await utils.post.invalidate();
-      setName("");
-    },
-  });
-
+  const onCallApi = async () => {
+    try {
+      const result = await axios.post('/api/chat', {
+        messages: [
+          {
+            role: 'user',
+            content: '晚上好'
+          }
+        ]
+      });
+      
+      console.log(result.data.choices[0].message.content)
+    } catch (error) {
+      console.error('Error calling API:', error);
+      setResponse('Failed to call API');
+    }
+  }
   return (
-    <div className="w-full max-w-xs">
-      {latestPost ? (
-        <p className="truncate">Your most recent post: {latestPost.name}</p>
-      ) : (
-        <p>You have no posts yet.</p>
-      )}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          createPost.mutate({ name });
-        }}
-        className="flex flex-col gap-2"
-      >
-        <input
-          type="text"
-          placeholder="Title"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-full px-4 py-2 text-black"
-        />
-        <button
-          type="submit"
-          className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"
-          disabled={createPost.isPending}
-        >
-          {createPost.isPending ? "Submitting..." : "Submit"}
-        </button>
-      </form>
+    <div className="flex flex-col items-center justify-center h-screen">
+      <button onClick={onCallApi} className="text-2xl font-bold text-red-500 border-2 border-red-500 rounded-md p-2 hover:bg-red-500 hover:text-white active:bg-red-700 active:border-red-700 transition-all duration-200 shadow-md hover:shadow-lg active:shadow-inner transform hover:-translate-y-0.5 active:translate-y-0.5">
+        call api
+      </button>
+      <div className="mt-4 p-4 bg-gray-100 rounded-md">
+        <pre>{response}</pre>
+      </div>
     </div>
   );
 }
